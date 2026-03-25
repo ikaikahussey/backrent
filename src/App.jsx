@@ -125,6 +125,41 @@ export default function App(){
   var loadComp=function(c){setSelected(c.parcels);setRateKey(c.rateKey);setCustomRate(c.customRate);setMethod(c.method);setInterest(c.interest);setSOverride(c.sOverride||"");setEOverride(c.eOverride||"");setShowSaved(false)};
   var addCustom=async function(){if(!newP.name||!newP.acres)return;var p={id:"c_"+Date.now(),name:newP.name,island:newP.island||"Custom",acres:parseInt(newP.acres),startYear:parseInt(newP.startYear)||1964,tenure:"federal_owned",notes:newP.notes||"",leaseCost:0,cededLand:true,category:"custom",sources:[]};var u=[].concat(customParcels,[p]);setCustomParcels(u);setSelected(function(prev){return[].concat(prev,[p.id])});setShowAdd(false);setNewP({name:"",island:"",acres:"",startYear:"1964",notes:""});try{storage.set("br3-custom",JSON.stringify(u))}catch(e){}};
 
+  // CERCLA emoji system
+  var CERCLA_ICONS={
+    nplActive:{icon:"\uD83D\uDD34",label:"NPL Superfund Site"},        // 🔴
+    nplDeleted:{icon:"\uD83D\uDFE2",label:"Deleted from NPL"},         // 🟢
+    nplFalse:{icon:"\uD83D\uDFE1",label:"Not on NPL"},                 // 🟡
+    uxo:{icon:"\uD83D\uDCA3",label:"Unexploded Ordnance"},             // 💣
+    nuclear:{icon:"\u2622\uFE0F",label:"Radioactive Materials"},        // ☢️
+    pfas:{icon:"\uD83D\uDCA7",label:"PFAS / Water Contamination"},     // 💧
+    petroleum:{icon:"\uD83D\uDEE2\uFE0F",label:"Petroleum / Fuel"},    // 🛢️
+    chemical:{icon:"\uD83E\uDDEA",label:"Chemical Contaminants"},       // 🧪
+    asbestos:{icon:"\uD83C\uDFED",label:"Asbestos"},                    // 🏭
+    active:{icon:"\u26A0\uFE0F",label:"Active Investigation/Cleanup"},  // ⚠️
+    completed:{icon:"\u2705",label:"Cleanup Completed"},                // ✅
+  };
+  var getCerclaIcons=function(cercla){
+    if(!cercla)return[];
+    var icons=[];
+    // NPL status
+    if(cercla.npl===true)icons.push(CERCLA_ICONS.nplActive);
+    else if(cercla.npl==="deleted")icons.push(CERCLA_ICONS.nplDeleted);
+    else icons.push(CERCLA_ICONS.nplFalse);
+    // Status
+    if(cercla.status&&/Active|ongoing|needed/i.test(cercla.status))icons.push(CERCLA_ICONS.active);
+    if(cercla.status&&/Completed/i.test(cercla.status))icons.push(CERCLA_ICONS.completed);
+    // Contaminants
+    var ct=(cercla.contaminants||[]).join(" ").toLowerCase();
+    if(/uxo|ordnance|unexploded/.test(ct))icons.push(CERCLA_ICONS.uxo);
+    if(/depleted uranium|radioactive/.test(ct))icons.push(CERCLA_ICONS.nuclear);
+    if(/pfas|afff/.test(ct))icons.push(CERCLA_ICONS.pfas);
+    if(/petroleum|fuel|jp-5/.test(ct))icons.push(CERCLA_ICONS.petroleum);
+    if(/asbestos/.test(ct))icons.push(CERCLA_ICONS.asbestos);
+    if(/tce|voc|pcb|pah|solvent|pesticide|rdx|dnt|arsenic|lead|mercury/.test(ct))icons.push(CERCLA_ICONS.chemical);
+    return icons;
+  };
+
   var genShare=function(){var t="BACK RENT COMPUTATION - FEDERAL-SEIZED CEDED LANDS\nState of Hawaii - "+new Date().toLocaleDateString()+"\n"+"=".repeat(52)+"\n\nMethod: "+(method==="simple"?"Flat":method==="compound"?"Compound ("+interest+"%)":"CPI-Adjusted")+"\nRate: "+rateLabel+" - $"+rate.toFixed(2)+"/acre/year\n\n";CATS.forEach(function(cat){var cr=results.filter(function(r){return r.parcel.category===cat.k});if(!cr.length)return;t+="-- "+cat.h+" "+"-".repeat(Math.max(0,40-cat.h.length))+"\n";cr.forEach(function(r){t+="  > "+r.parcel.name+"\n    "+r.parcel.acres.toLocaleString()+" ac - "+r.parcel.island+" - "+r.result.startYear+"-"+r.result.endYear+"\n    Owed: "+fmtFull(r.result.total)+"\n\n"})});t+="=".repeat(52)+"\nFEDERAL-OWNED: "+fedAcres.toLocaleString()+" ac\nSTATE-LEASED:  "+leaseAcres.toLocaleString()+" ac\nRETURNED:      "+retAcres.toLocaleString()+" ac\nTOTAL ACREAGE: "+totalAcres.toLocaleString()+" ac\nTOTAL PAID:    "+fmtFull(totalPaid)+"\nBACK RENT:     "+fmtFull(grandTotal)+"\n\nSOURCES: EO 11167, EO 11166, EO 11165, 1969 Historical Analysis Table 9,\nDLNR 2026 Leg Report, HMLUMP 2021, Admission Act Sec 5(b)(d)(f)\n";setShareText(t)};
 
   var filtered=filter==="all"?allParcels:allParcels.filter(function(p){return p.category===filter});
@@ -270,6 +305,7 @@ export default function App(){
                         <span style={{color:T.text,fontSize:fs(13),fontWeight:600}}>{p.name}</span>
                         <span style={{color:T.textFaintest,fontSize:fs(11)}}>{p.island}</span>
                         <span style={{fontSize:fs(9),padding:"1px 5px",background:cat.c+"18",color:cat.c,border:"1px solid "+cat.c+"33"}}>{CATEGORY_LABELS[p.category]}</span>
+                        {p.cercla&&<span style={{fontSize:fs(9),padding:"1px 5px",background:p.cercla.npl===true?"#e74c3c18":p.cercla.npl==="deleted"?"#27ae6018":"#f39c1218",color:p.cercla.npl===true?"#e74c3c":p.cercla.npl==="deleted"?"#27ae60":"#f39c12",border:"1px solid "+(p.cercla.npl===true?"#e74c3c33":p.cercla.npl==="deleted"?"#27ae6033":"#f39c1233")}}>{p.cercla.npl===true?"\uD83D\uDD34 NPL":p.cercla.npl==="deleted"?"\uD83D\uDFE2 NPL-DEL":"\uD83D\uDFE1 CERCLA"}{p.cercla.contaminants&&p.cercla.contaminants.length>0?" ("+p.cercla.contaminants.length+")":""}</span>}
                       </div>
                       <div style={{color:T.textFaint,fontSize:fs(10),marginTop:2}}>{p.acres.toLocaleString()} ac | {p.acquisitionMethod} | {res.startYear}-{res.endYear} ({res.years} yrs)</div>
                       {isSel&&<div style={{color:T.textMuted,fontSize:fs(10),marginTop:2}}>Base: {fmtFull(res.annualBase)}/yr</div>}
@@ -285,6 +321,24 @@ export default function App(){
                     {p.sources&&p.sources.length>0&&<div style={{display:"flex",flexWrap:"wrap",gap:4,marginBottom:4}}>
                       {p.sources.map(function(src,si){return src.url?<a key={si} href={src.url} target="_blank" rel="noopener noreferrer" onClick={function(e){e.stopPropagation()}} style={{fontSize:fs(9),color:T.link,textDecoration:"none",borderBottom:"1px dotted "+T.link+"44"}}>{src.label}</a>:<span key={si} style={{fontSize:fs(9),color:T.link}}>{src.label}</span>})}
                     </div>}
+                    {p.cercla&&(function(){
+                      var icons=getCerclaIcons(p.cercla);
+                      var nplColor=p.cercla.npl===true?"#e74c3c":p.cercla.npl==="deleted"?"#27ae60":"#f39c12";
+                      var nplLabel=p.cercla.npl===true?"SUPERFUND (NPL)":p.cercla.npl==="deleted"?"DELETED FROM NPL":"NOT ON NPL";
+                      return <div style={{background:nplColor+"0d",border:"1px solid "+nplColor+"33",padding:"8px 10px",marginBottom:6}} onClick={function(e){e.stopPropagation()}}>
+                        <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4,flexWrap:"wrap"}}>
+                          {icons.map(function(ic,ii){return <span key={ii} title={ic.label} style={{fontSize:fs(14),cursor:"help"}}>{ic.icon}</span>})}
+                          <span style={{fontSize:fs(9),fontWeight:700,color:nplColor,letterSpacing:"0.08em",textTransform:"uppercase",marginLeft:4}}>{nplLabel}</span>
+                          {p.cercla.epaId&&<span style={{fontSize:fs(9),color:T.textFaintest,marginLeft:"auto"}}>EPA: {p.cercla.epaId}</span>}
+                        </div>
+                        {p.cercla.status&&<div style={{fontSize:fs(10),color:T.textMuted,lineHeight:1.4,marginBottom:3}}>{p.cercla.status}</div>}
+                        {p.cercla.nplNote&&<div style={{fontSize:fs(9),color:T.textFaintest,fontStyle:"italic",marginBottom:3}}>{p.cercla.nplNote}</div>}
+                        {p.cercla.contaminants&&p.cercla.contaminants.length>0&&<div style={{display:"flex",flexWrap:"wrap",gap:3,marginTop:2}}>
+                          {p.cercla.contaminants.map(function(c,ci){return <span key={ci} style={{fontSize:fs(9),padding:"1px 5px",background:nplColor+"15",color:nplColor,border:"1px solid "+nplColor+"33"}}>{c}</span>})}
+                        </div>}
+                        {p.cercla.url&&<a href={p.cercla.url} target="_blank" rel="noopener noreferrer" onClick={function(e){e.stopPropagation()}} style={{fontSize:fs(9),color:T.link,textDecoration:"none",borderBottom:"1px dotted "+T.link+"44",display:"inline-block",marginTop:4}}>EPA CERCLIS Record →</a>}
+                      </div>
+                    })()}
                     <button onClick={function(e){e.stopPropagation();setExpandedParcel(isExpanded?null:p.id)}} style={{background:"none",border:"1px solid "+T.borderLight,color:T.textFaint,padding:"2px 8px",fontSize:fs(9),cursor:"pointer",fontFamily:T.fontMono}}>{isExpanded?"Hide":"Show"} year-by-year</button>
                     {isExpanded&&<div style={{maxHeight:200,overflowY:"auto",background:T.bgExpand,border:"1px solid "+T.border,fontSize:fs(11),marginTop:6}}>
                       <div style={{display:"grid",gridTemplateColumns:"70px 1fr 110px",padding:"4px 10px",color:T.textFaintest,borderBottom:"1px solid "+T.border,position:"sticky",top:0,background:T.bgExpand,fontSize:fs(9),textTransform:"uppercase",letterSpacing:"0.06em"}}><div>Year</div><div></div><div style={{textAlign:"right"}}>Annual Rent</div></div>

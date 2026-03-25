@@ -78,6 +78,8 @@ export default function App(){
   var [shareText,setShareText]=useState("");
   var [filter,setFilter]=useState("all");
   var [activeNav,setActiveNav]=useState("summary");
+  var [showTreemap,setShowTreemap]=useState(false);
+  var [hoverParcel,setHoverParcel]=useState(null);
 
   var NAV_ITEMS=[{id:"summary",label:"Summary"},{id:"parameters",label:"Parameters"},{id:"parcels",label:"Parcels"},{id:"save",label:"Save & Share"},{id:"methodology",label:"Sources"}];
 
@@ -101,6 +103,100 @@ export default function App(){
   useEffect(function(){document.body.style.background=T.bg;document.documentElement.style.background=T.bg},[colorMode]);
 
   useEffect(function(){(async function(){try{var r=storage.get("br3-saved");if(r&&r.value)setSaved(JSON.parse(r.value))}catch(e){}try{var r2=storage.get("br3-custom");if(r2&&r2.value){var cp=JSON.parse(r2.value);setCustomParcels(cp);setSelected(function(prev){return ALL_PARCEL_IDS.concat(cp.map(function(p){return p.id}))})}}catch(e){}})()},[]);
+
+  useEffect(function(){
+    if(!showTreemap)return;
+    var handler=function(e){if(e.key==="Escape")setShowTreemap(false)};
+    document.addEventListener("keydown",handler);
+    return function(){document.removeEventListener("keydown",handler)};
+  },[showTreemap]);
+
+  // Squarified treemap: attempt to produce squares for a patchwork look
+  var squarify=function(items,x,y,w,h){
+    if(!items.length)return[];
+    if(items.length===1)return[{item:items[0],x:x,y:y,w:w,h:h}];
+    var total=items.reduce(function(s,it){return s+it.val},0);
+    if(total<=0||w<=0||h<=0)return[];
+    var rects=[];
+    var remaining=items.slice();
+    var cx=x,cy=y,cw=w,ch=h;
+    while(remaining.length>0){
+      var rem=remaining.reduce(function(s,it){return s+it.val},0);
+      var isWide=cw>=ch;
+      var side=isWide?ch:cw;
+      // greedily add items to current row until aspect ratio worsens
+      var row=[remaining[0]];
+      var rowSum=remaining[0].val;
+      var bestWorst=Infinity;
+      for(var i=1;i<remaining.length;i++){
+        var testSum=rowSum+remaining[i].val;
+        var testRow=row.concat([remaining[i]]);
+        var stripLen=(testSum/rem)*(isWide?cw:ch);
+        var worst=0;
+        for(var j=0;j<testRow.length;j++){
+          var itemLen=(testRow[j].val/testSum)*side;
+          var ar=Math.max(stripLen/itemLen,itemLen/stripLen);
+          if(ar>worst)worst=ar;
+        }
+        // check previous worst
+        var prevStrip=(rowSum/rem)*(isWide?cw:ch);
+        var prevWorst=0;
+        for(var j2=0;j2<row.length;j2++){
+          var il=(row[j2].val/rowSum)*side;
+          var ar2=Math.max(prevStrip/il,il/prevStrip);
+          if(ar2>prevWorst)prevWorst=ar2;
+        }
+        if(worst>prevWorst&&row.length>=1)break;
+        row.push(remaining[i]);
+        rowSum=testSum;
+      }
+      // lay out row
+      var stripSize=(rowSum/rem)*(isWide?cw:ch);
+      var pos=isWide?cy:cx;
+      for(var k=0;k<row.length;k++){
+        var itemSize=(row[k].val/rowSum)*side;
+        if(isWide){
+          rects.push({item:row[k],x:cx,y:pos,w:stripSize,h:itemSize});
+          pos+=itemSize;
+        }else{
+          rects.push({item:row[k],x:pos,y:cy,w:itemSize,h:stripSize});
+          pos+=itemSize;
+        }
+      }
+      // shrink remaining area
+      if(isWide){cx+=stripSize;cw-=stripSize}
+      else{cy+=stripSize;ch-=stripSize}
+      remaining=remaining.slice(row.length);
+    }
+    return rects;
+  };
+
+  var computeTreemap=function(parcels,W,H){
+    var groups=[];
+    CATS.forEach(function(cat){
+      var ps=parcels.filter(function(p){return p.category===cat.k}).sort(function(a,b){return b.acres-a.acres});
+      if(ps.length)groups.push({cat:cat,parcels:ps,totalAcres:ps.reduce(function(s,p){return s+p.acres},0)});
+    });
+    if(!groups.length)return{groups:[],rects:[]};
+    var grandTotal=groups.reduce(function(s,g){return s+g.totalAcres},0);
+    // lay out category-level boxes as a top-level treemap
+    var catItems=groups.map(function(g){return{val:g.totalAcres,group:g}});
+    var catRects=squarify(catItems,0,0,W,H);
+    // within each category rect, squarify its parcels
+    var rects=[];
+    catRects.forEach(function(cr){
+      var g=cr.item.group;
+      var PAD=2;
+      var inner=squarify(
+        g.parcels.map(function(p){return{val:p.acres,parcel:p}}),
+        cr.x+PAD,cr.y+PAD,cr.w-PAD*2,cr.h-PAD*2
+      );
+      inner.forEach(function(ir){
+        rects.push({parcel:ir.item.parcel,cat:g.cat,x:ir.x,y:ir.y,w:ir.w,h:ir.h,catRect:cr});
+      });
+    });
+    return{groups:groups,rects:rects,catRects:catRects};
+  };
 
   var allParcels=[].concat(PARCELS,customParcels);
   var rate=rateKey==="custom"?customRate:BENCHMARKS[rateKey].rate;
@@ -200,6 +296,7 @@ export default function App(){
           <div style={{display:"flex",alignItems:"center",gap:6,padding:"0 4px"}}>
             <span style={{color:T.accent,fontSize:fs(13),fontWeight:700,fontFamily:T.fontMono}}>{fmt(grandTotal)}</span>
             <span style={{color:T.textFaintest,fontSize:fs(10),marginRight:8}}>{totalAcres.toLocaleString()} ac</span>
+            <button onClick={function(){setShowTreemap(true)}} title="Land distribution treemap" style={{background:"none",border:"1px solid "+T.borderInput,color:T.textMuted,padding:"0 8px",height:26,cursor:"pointer",fontFamily:T.fontMono,fontSize:fs(9),letterSpacing:"0.04em",textTransform:"uppercase",display:"flex",alignItems:"center"}}>Map</button>
             <button onClick={function(){adjustFont(-0.1)}} title="Decrease text size" style={{background:"none",border:"1px solid "+T.borderInput,color:T.textMuted,width:26,height:26,cursor:"pointer",fontFamily:T.fontMono,fontSize:11,display:"flex",alignItems:"center",justifyContent:"center",padding:0,opacity:fontScale<=0.8?0.3:1}}>A-</button>
             <button onClick={function(){adjustFont(0.1)}} title="Increase text size" style={{background:"none",border:"1px solid "+T.borderInput,color:T.textMuted,width:26,height:26,cursor:"pointer",fontFamily:T.fontMono,fontSize:11,display:"flex",alignItems:"center",justifyContent:"center",padding:0,opacity:fontScale>=1.4?0.3:1}}>A+</button>
             <button onClick={toggleColor} title={colorMode==="dark"?"Switch to light mode":"Switch to dark mode"} style={{background:"none",border:"1px solid "+T.borderInput,color:T.textMuted,width:26,height:26,cursor:"pointer",fontSize:14,display:"flex",alignItems:"center",justifyContent:"center",padding:0}}>{colorMode==="dark"?"\u2600":"\u263D"}</button>
@@ -389,6 +486,104 @@ export default function App(){
       <footer style={{borderTop:"1px solid "+T.border,padding:"16px 32px",textAlign:"center",color:T.textFooter,fontSize:fs(10)}}>
         Public domain analytical tool. Data from EO 11167, EO 11166, EO 11165, 1969 Historical Analysis, DLNR records, HMLUMP 2021, Federal Register. Not legal or financial advice.
       </footer>
+
+      {/* TREEMAP MODAL */}
+      {showTreemap&&(function(){
+        var TW=960,TH=540;
+        var tm=computeTreemap(allParcels,TW,TH);
+        return <div style={{position:"fixed",top:0,left:0,right:0,bottom:0,background:"rgba(0,0,0,0.75)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center"}} onClick={function(){setShowTreemap(false);setHoverParcel(null)}}>
+          <div style={{background:T.bgCard,border:"1px solid "+T.borderLight,maxWidth:1040,width:"95vw",maxHeight:"90vh",overflow:"auto",padding:0}} onClick={function(e){e.stopPropagation()}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"14px 20px",borderBottom:"1px solid "+T.border}}>
+              <div>
+                <div style={{color:T.text,fontSize:fs(15),fontWeight:700,fontFamily:T.fontDisplay}}>Land Distribution</div>
+                <div style={{color:T.textFaint,fontSize:fs(9),marginTop:2}}>Box area proportional to acreage. Hover or tap a parcel for details.</div>
+              </div>
+              <button onClick={function(){setShowTreemap(false);setHoverParcel(null)}} style={{background:"none",border:"1px solid "+T.borderInput,color:T.textMuted,width:28,height:28,cursor:"pointer",fontSize:15,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>×</button>
+            </div>
+            <div style={{padding:"12px 16px"}}>
+              {/* Treemap container */}
+              <div style={{position:"relative",width:"100%",paddingBottom:(TH/TW*100)+"%",background:T.bg,overflow:"hidden"}}>
+                {/* Category background rects */}
+                {tm.catRects&&tm.catRects.map(function(cr){
+                  var g=cr.item.group;
+                  var pctX=(cr.x/TW)*100,pctY=(cr.y/TH)*100,pctW=(cr.w/TW)*100,pctH=(cr.h/TH)*100;
+                  return <div key={"cat-"+g.cat.k} style={{
+                    position:"absolute",left:pctX+"%",top:pctY+"%",width:pctW+"%",height:pctH+"%",
+                    background:g.cat.c+"0a",boxSizing:"border-box",
+                    border:"2px solid "+g.cat.c+"44",
+                  }}>
+                    <div style={{position:"absolute",top:3,left:5,zIndex:2,pointerEvents:"none"}}>
+                      <div style={{color:g.cat.c,fontSize:fs(9),fontWeight:700,textTransform:"uppercase",letterSpacing:"0.08em",textShadow:"0 1px 3px rgba(0,0,0,0.5)"}}>{CATEGORY_LABELS[g.cat.k]}</div>
+                      <div style={{color:g.cat.c,fontSize:fs(8),opacity:0.7,textShadow:"0 1px 3px rgba(0,0,0,0.5)"}}>{g.totalAcres.toLocaleString()} ac</div>
+                    </div>
+                  </div>
+                })}
+                {/* Parcel rects */}
+                {tm.rects.map(function(r){
+                  var isSel=selected.includes(r.parcel.id);
+                  var isHov=hoverParcel===r.parcel.id;
+                  var pctX=(r.x/TW)*100,pctY=(r.y/TH)*100,pctW=(r.w/TW)*100,pctH=(r.h/TH)*100;
+                  var area=pctW*pctH;
+                  var showName=area>8&&pctH>3&&pctW>5;
+                  var showAcres=area>3&&pctH>2;
+                  return <div key={r.parcel.id}
+                    onMouseEnter={function(){setHoverParcel(r.parcel.id)}}
+                    onMouseLeave={function(){setHoverParcel(null)}}
+                    onClick={function(e){e.stopPropagation();setHoverParcel(hoverParcel===r.parcel.id?null:r.parcel.id)}}
+                    style={{
+                      position:"absolute",left:pctX+"%",top:pctY+"%",width:pctW+"%",height:pctH+"%",
+                      background:isHov?r.cat.c+"44":isSel?r.cat.c+"28":r.cat.c+"15",
+                      border:"1px solid "+(isHov?r.cat.c:isSel?r.cat.c+"66":r.cat.c+"33"),
+                      boxSizing:"border-box",overflow:"hidden",cursor:"pointer",
+                      transition:"background 0.15s,border-color 0.15s",
+                      display:"flex",flexDirection:"column",justifyContent:showName?"flex-end":"center",
+                      padding:showAcres?"4px 5px":"1px 2px",
+                    }}>
+                    {showName&&<div style={{color:isSel?T.text:T.textMuted,fontSize:fs(area>40?11:9),fontWeight:600,lineHeight:1.2,overflow:"hidden",textOverflow:"ellipsis",display:"-webkit-box",WebkitLineClamp:pctH>6?2:1,WebkitBoxOrient:"vertical"}}>{r.parcel.name}</div>}
+                    {showAcres&&<div style={{color:T.textFaintest,fontSize:fs(8),whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",marginTop:1}}>{r.parcel.acres.toLocaleString()} ac</div>}
+                  </div>
+                })}
+                {/* Hover/tap tooltip */}
+                {hoverParcel&&(function(){
+                  var hr=tm.rects.find(function(r){return r.parcel.id===hoverParcel});
+                  if(!hr)return null;
+                  var res=resultMap[hr.parcel.id];
+                  var midX=(hr.x+hr.w/2)/TW*100;
+                  var midY=(hr.y+hr.h/2)/TH*100;
+                  var tipRight=midX>60;
+                  var tipBottom=midY<30;
+                  return <div style={{
+                    position:"absolute",
+                    left:tipRight?"auto":(midX+"%"),
+                    right:tipRight?((100-midX)+"%"):"auto",
+                    top:tipBottom?((hr.y/TH*100+hr.h/TH*100+1)+"%"):"auto",
+                    bottom:tipBottom?"auto":((100-hr.y/TH*100+1)+"%"),
+                    background:T.bgCard,border:"1px solid "+T.borderLight,
+                    padding:"8px 12px",zIndex:10,pointerEvents:"none",
+                    minWidth:180,maxWidth:260,
+                    boxShadow:"0 4px 16px rgba(0,0,0,0.4)",
+                  }}>
+                    <div style={{color:T.text,fontSize:fs(12),fontWeight:700,lineHeight:1.3}}>{hr.parcel.name}</div>
+                    <div style={{color:T.textMuted,fontSize:fs(10),marginTop:2}}>{hr.parcel.island} · {hr.parcel.acres.toLocaleString()} acres</div>
+                    <div style={{color:hr.cat.c,fontSize:fs(9),textTransform:"uppercase",letterSpacing:"0.06em",marginTop:2}}>{CATEGORY_LABELS[hr.parcel.category]}</div>
+                    {res&&<div style={{color:T.accent,fontSize:fs(13),fontWeight:700,marginTop:4}}>{fmt(res.total)}</div>}
+                    {!selected.includes(hr.parcel.id)&&<div style={{color:T.textFaintest,fontSize:fs(9),marginTop:2,fontStyle:"italic"}}>Not selected</div>}
+                  </div>
+                })()}
+              </div>
+              {/* Legend */}
+              <div style={{display:"flex",gap:14,marginTop:8,flexWrap:"wrap",alignItems:"center"}}>
+                {tm.groups.map(function(g){
+                  return <div key={g.cat.k} style={{display:"flex",alignItems:"center",gap:4}}>
+                    <div style={{width:10,height:10,background:g.cat.c,flexShrink:0}}/>
+                    <span style={{color:T.textMuted,fontSize:fs(9)}}>{CATEGORY_LABELS[g.cat.k]} ({g.parcels.length})</span>
+                  </div>
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+      })()}
     </div>
   );
 }

@@ -169,24 +169,6 @@ export default function App(){
         </div>
       </header>
 
-      {/* STICKY NAV */}
-      <nav ref={navRef} style={{position:"sticky",top:0,zIndex:100,background:"#0d0d0d",borderBottom:"1px solid #1a1a1a",padding:"0 32px"}}>
-        <div style={{maxWidth:1020,margin:"0 auto",display:"flex",gap:0,overflowX:"auto"}}>
-          {NAV_ITEMS.map(function(item){
-            var isActive=activeNav===item.id;
-            return <button key={item.id} onClick={function(){scrollTo(item.id)}} style={{
-              background:"none",border:"none",borderBottom:isActive?"2px solid #c8a96e":"2px solid transparent",
-              color:isActive?"#c8a96e":"#666",padding:"10px 16px",fontSize:11,fontFamily:"'DM Mono',monospace",
-              cursor:"pointer",letterSpacing:"0.08em",textTransform:"uppercase",whiteSpace:"nowrap",transition:"all 0.15s",
-            }}>{item.label}</button>
-          })}
-          <div style={{flex:1}}/>
-          <div style={{display:"flex",alignItems:"center",padding:"0 4px",gap:12}}>
-            <span style={{color:"#555",fontSize:10}}>{totalAcres.toLocaleString()} ac</span>
-            <span style={{color:"#c8a96e",fontSize:14,fontWeight:700}}>{fmt(grandTotal)}</span>
-          </div>
-        </div>
-      </nav>
 
       {/* STICKY NAV */}
       <nav style={{position:"sticky",top:0,zIndex:100,background:"#0d0d0dee",backdropFilter:"blur(8px)",WebkitBackdropFilter:"blur(8px)",borderBottom:"1px solid #1a1a1a",padding:"0 32px"}}>

@@ -44,6 +44,7 @@ export const PARCELS = [
     notes: "EO 11167 (LBJ, Aug 15, 1964) set aside 84,057 ac of Crown Land of Humu'ula and Government Lands of Kaohe/Pu'uanahulu. Largest single federal seizure of ceded land. Contains 51,000-ac impact area with depleted uranium contamination.",
     zoning: "conservation",
     category: "federal",
+    cercla: { epaId: "HI3214522234", siteNo: "0904485", npl: false, status: "Site Inspection Review Start Needed", contaminants: ["UXO", "depleted uranium", "range contaminants"], url: "https://cumulis.epa.gov/supercpad/cursites/csitinfo.cfm?id=0904485" },
     sources: [
       { label: "EO 11167 Full Text", url: "https://www.presidency.ucsb.edu/documents/executive-order-11167-setting-aside-for-the-use-the-united-states-certain-public-lands-and" },
       { label: "Final EIS (2025)", url: "https://www.federalregister.gov/documents/2025/04/18/2025-06686/final-environmental-impact-statement-for-army-training-land-retention-at-phakuloa-training-area-in" },
@@ -66,6 +67,7 @@ export const PARCELS = [
     notes: "Established 1908 on ceded Crown/Government lands. Largest Army post in Hawaii. Home of 25th Infantry Division.",
     zoning: "military",
     category: "federal",
+    cercla: { epaId: "HI2210020774", siteNo: "0902923", npl: "deleted", nplNote: "Deleted from NPL in 2000", status: "Completed", contaminants: ["TCE", "VOCs", "asbestos"], url: "https://cumulis.epa.gov/supercpad/cursites/csitinfo.cfm?id=0902923" },
     sources: [
       { label: "Wikipedia (17,725 ac)", url: "https://en.wikipedia.org/wiki/Schofield_Barracks" },
       { label: "Military.com", url: "https://www.military.com/base-guide/schofield-barracksfort-shafter" },
@@ -85,6 +87,7 @@ export const PARCELS = [
     notes: "Pearl Harbor ceded 1887 (reciprocity treaty). Hickam est. 1935. 6 Superfund sites. Red Hill fuel spill contaminated drinking water (2021). Ke'awalau o Pu'uloa once supported 36+ fishponds. Acreage excludes Ford Island (counted separately).",
     zoning: "military",
     category: "federal",
+    cercla: { epaId: "HI4170090076", siteNo: "0904481", npl: true, status: "Active — investigations and remedial actions ongoing across 18 Geographic Study Areas", contaminants: ["arsenic", "chlorinated solvents", "lead", "PAHs", "PCBs", "pesticides", "petroleum hydrocarbons", "PFAS"], url: "https://cumulis.epa.gov/supercpad/cursites/csitinfo.cfm?id=0904481" },
     sources: [
       { label: "Cultural Survival", url: "https://www.culturalsurvival.org/publications/cultural-survival-quarterly/nation-under-gun-militarism-and-resistance-hawaii" },
       { label: "Hawaii Business", url: "https://www.hawaiibusiness.com/hawaiian-kingdom-ceded-lands-history-debate-solutions/" },
@@ -123,6 +126,7 @@ export const PARCELS = [
     notes: "Mokapu Peninsula. Hundreds of iwi kupuna unearthed by military housing construction. Ceded Crown lands seized during WWII.",
     zoning: "military",
     category: "federal",
+    cercla: { epaId: "HI6170022762", siteNo: "0902919", npl: false, status: "Federal Facility-Lead Cleanup", contaminants: ["PCBs", "stormwater discharge violations"], url: "https://cumulis.epa.gov/supercpad/cursites/csitinfo.cfm?id=0902919" },
     sources: [
       { label: "Cultural Survival", url: "https://www.culturalsurvival.org/publications/cultural-survival-quarterly/nation-under-gun-militarism-and-resistance-hawaii" },
     ],
@@ -141,6 +145,7 @@ export const PARCELS = [
     notes: "Adjacent to Schofield Barracks. Est. 1922 on ceded Government lands. Primary Army aviation facility.",
     zoning: "military",
     category: "federal",
+    cercla: { epaId: "HI3573028732", siteNo: "0902917", npl: false, status: "Federal Facility-Lead Cleanup", contaminants: ["PFAS"], url: "https://cumulis.epa.gov/supercpad/cursites/csitinfo.cfm?id=0902917" },
     sources: [
       { label: "HMLUMP 2021", url: "https://drive.google.com/file/d/1Uov0HevmHkfMG-ma-iEzxYgECHue67aY/view" },
     ],
@@ -159,6 +164,7 @@ export const PARCELS = [
     notes: "Ammunition storage. 1,356 ac improperly withdrawn from Hawaiian Home Lands. 1999 land swap gave DHHL only 580 ac at Barber's Point — net loss of 770 ac from Native land base.",
     zoning: "military",
     category: "federal",
+    cercla: { epaId: "HI9170090006", siteNo: "0902926", npl: true, status: "Active — Federal Facility Agreement (2009) with EPA and Hawaii DOH", contaminants: ["ordnance-related contamination"], url: "https://cumulis.epa.gov/supercpad/cursites/calinfo.cfm?id=0902926" },
     sources: [
       { label: "Cultural Survival", url: "https://www.culturalsurvival.org/publications/cultural-survival-quarterly/nation-under-gun-militarism-and-resistance-hawaii" },
       { label: "HMLUMP 2021", url: "https://drive.google.com/file/d/1Uov0HevmHkfMG-ma-iEzxYgECHue67aY/view" },
@@ -178,6 +184,7 @@ export const PARCELS = [
     notes: "Fort Shafter (~574 ac) est. 1907, HQ US Army Pacific. Camp Smith (224 ac) HQ US Indo-Pacific Command. EO 11165 set aside 0.5 additional ac in 1964.",
     zoning: "military",
     category: "federal",
+    cercla: { epaId: "HI6214522207", siteNo: "0902921", npl: false, status: "Site Inspection Review Start Needed", contaminants: ["asbestos"], url: "https://cumulis.epa.gov/supercpad/cursites/csitinfo.cfm?id=0902921" },
     sources: [
       { label: "EO 11165 (1964)", url: "https://www.presidency.ucsb.edu/documents/executive-order-11165-setting-aside-for-the-use-the-united-states-certain-public-lands-and" },
       { label: "EO 2521 / 10404 (Shafter)", url: "https://www.presidency.ucsb.edu/documents/executive-order-10404-resorting-certain-land-reserved-for-military-purposes-the-territory" },
@@ -197,6 +204,7 @@ export const PARCELS = [
     notes: "Barking Sands. Navy's primary missile testing range in Pacific. Includes oceanfront land at Nohili.",
     zoning: "military",
     category: "federal",
+    cercla: { epaId: "HI6170024719", siteNo: "0900204", npl: false, status: "NFRAP — does not qualify based on existing information", contaminants: ["PFAS/AFFF"], url: "https://cumulis.epa.gov/supercpad/cursites/csitinfo.cfm?id=0900204" },
     sources: [
       { label: "OHA: Military Leased Lands", url: "https://www.oha.org/aloha-aina/" },
       { label: "HMLUMP 2021", url: "https://drive.google.com/file/d/1Uov0HevmHkfMG-ma-iEzxYgECHue67aY/view" },
@@ -216,6 +224,7 @@ export const PARCELS = [
     notes: "Sacred valley. Families forcibly evicted during WWII — never allowed return. Live-fire suspended since 2004 per court order.",
     zoning: "conservation",
     category: "federal",
+    cercla: { epaId: "HI7210022227", siteNo: "0900212", npl: false, status: "Active — UXO sweeps and PFAS assessment", contaminants: ["UXO", "RDX", "2,4-DNT", "2,6-DNT", "PFAS/AFFF"], url: "https://cumulis.epa.gov/supercpad/cursites/calinfo.cfm?id=0900212" },
     sources: [
       { label: "EO 11166 (1964)", url: "https://www.presidency.ucsb.edu/documents/executive-order-11166-setting-aside-for-the-use-the-united-states-certain-public-lands-and" },
       { label: "1969 Historical Analysis, Table 9", url: "" },
@@ -237,6 +246,7 @@ export const PARCELS = [
     notes: "Waimanalo beachfront. Includes land improperly withdrawn from Hawaiian Home Lands. Some of Oahu's most valuable beachfront.",
     zoning: "mixed",
     category: "federal",
+    cercla: { epaId: "HI3570028719", siteNo: "0902916", npl: false, status: "Federal Facility-Lead Cleanup", contaminants: [], url: "https://cumulis.epa.gov/supercpad/cursites/csitinfo.cfm?id=0902916" },
     sources: [
       { label: "Bellows AFS ROD (1996)", url: "https://www.govinfo.gov/content/pkg/FR-1996-06-05/html/96-14067.htm" },
       { label: "HMLUMP 2021", url: "https://drive.google.com/file/d/1Uov0HevmHkfMG-ma-iEzxYgECHue67aY/view" },
@@ -390,6 +400,7 @@ export const PARCELS = [
     notes: "20 underground steel-lined tanks holding 250M gallons of fuel. Nov 2021 fuel leak contaminated Oahu drinking water for ~93,000 people. Defueling completed 2024. Facility to be permanently closed.",
     zoning: "military",
     category: "federal",
+    cercla: { epaId: "HI4170090076", siteNo: "0904481", npl: true, nplNote: "Part of Pearl Harbor Naval Complex NPL site", status: "Active — defueling completed 2024, permanent closure pending", contaminants: ["jet fuel (JP-5)", "petroleum hydrocarbons", "PFAS"], url: "https://cumulis.epa.gov/supercpad/cursites/csitinfo.cfm?id=0904481" },
     sources: [
       { label: "Noho Hewa", url: "https://nohohewa.com/occupied-areas/" },
     ],
@@ -521,6 +532,7 @@ export const PARCELS = [
     notes: "Sacred island seized by Navy 1941. Bombed 53 years. Returned 1994. Congress provided $400M for partial cleanup (75% surface). Entire island on National Register. Still largely unusable.",
     zoning: "conservation",
     category: "returned",
+    cercla: { epaId: "HI6170090074", siteNo: "0904432", npl: false, status: "Preliminary Assessment Review Start Needed — 75% surface cleared, ~9% subsurface cleared, ~30% not cleared", contaminants: ["UXO", "heavy metals", "explosives residue"], url: "https://cumulis.epa.gov/supercpad/cursites/csitinfo.cfm?id=0904432" },
     sources: [
       { label: "EO 10436 (Kahoolawe)", url: "https://www.presidency.ucsb.edu/documents/executive-order-10436-reserving-kahoolawe-island-territory-hawaii-for-the-use-the-united" },
       { label: "Noho Hewa", url: "https://nohohewa.com/occupied-areas/" },

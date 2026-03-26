@@ -298,7 +298,7 @@ export default function App(){
           <div style={{color:T.accent,fontSize:fs(10),letterSpacing:"0.2em",textTransform:"uppercase",marginBottom:8}}>Financial Analysis - Public Record</div>
           <h1 style={{fontFamily:T.fontDisplay,fontSize:fs(28),fontWeight:400,color:T.text,margin:0}}>Back Rent Computation</h1>
           <h2 style={{fontFamily:T.fontDisplay,fontSize:fs(18),fontWeight:400,color:T.textMuted,margin:"4px 0 0"}}>Federal-Seized & State-Leased Ceded Public Trust Lands - Hawaii</h2>
-          <div style={{color:T.textFaint,fontSize:fs(11),marginTop:12,lineHeight:1.6,maxWidth:720}}>At statehood (1959), federal agencies controlled 432,726 acres of Hawaii's public domain. Under Section 5(d) of the Admission Act, 87,237 acres were seized by executive order and 30,176 acres placed under $1/65-year leases. HMLUMP 2021 reports 221,981 total military-controlled acres statewide.</div>
+          <div style={{color:T.textFaint,fontSize:fs(11),marginTop:12,lineHeight:1.6,maxWidth:720}}>From 1900 to statehood in 1959, the federal government acquired {totalAcres.toLocaleString()} acres of Crown and Government land for military purposes. No compensation was provided for this taking. The purpose of this website is to facilitate a public accounting of unpaid back rent for these lands.</div>
         </div>
       </header>
 
@@ -445,16 +445,16 @@ export default function App(){
                       var icons=getCerclaIcons(p.cercla);
                       var nplColor=p.cercla.npl===true?"#e74c3c":p.cercla.npl==="deleted"?"#27ae60":"#f39c12";
                       var nplLabel=p.cercla.npl===true?"SUPERFUND (NPL)":p.cercla.npl==="deleted"?"DELETED FROM NPL":"NOT ON NPL";
-                      return <div style={{background:nplColor+"0d",border:"1px solid "+nplColor+"33",padding:"8px 10px",marginBottom:6}} onClick={function(e){e.stopPropagation()}}>
+                      return <div style={{border:"1px solid "+T.borderLight,padding:"8px 10px",marginBottom:6}} onClick={function(e){e.stopPropagation()}}>
                         <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4,flexWrap:"wrap"}}>
                           {icons.map(function(ic,ii){return <span key={ii} title={ic.label} style={{fontSize:fs(14),cursor:"help"}}>{ic.icon}</span>})}
-                          <span style={{fontSize:fs(9),fontWeight:700,color:nplColor,letterSpacing:"0.08em",textTransform:"uppercase",marginLeft:4}}>{nplLabel}</span>
+                          <a href="https://www.epa.gov/superfund/superfund-national-priorities-list-npl" target="_blank" rel="noopener noreferrer" onClick={function(e){e.stopPropagation()}} style={{fontSize:fs(9),fontWeight:700,color:nplColor,letterSpacing:"0.08em",textTransform:"uppercase",marginLeft:4,textDecoration:"none",borderBottom:"1px dotted "+nplColor+"66",cursor:"pointer"}} title="National Priorities List — EPA's list of the most serious uncontrolled or abandoned hazardous waste sites">{nplLabel}</a>
                           {p.cercla.epaId&&<span style={{fontSize:fs(9),color:T.textFaintest,marginLeft:"auto"}}>EPA: {p.cercla.epaId}</span>}
                         </div>
                         {p.cercla.status&&<div style={{fontSize:fs(10),color:T.textMuted,lineHeight:1.4,marginBottom:3}}>{p.cercla.status}</div>}
                         {p.cercla.nplNote&&<div style={{fontSize:fs(9),color:T.textFaintest,fontStyle:"italic",marginBottom:3}}>{p.cercla.nplNote}</div>}
                         {p.cercla.contaminants&&p.cercla.contaminants.length>0&&<div style={{display:"flex",flexWrap:"wrap",gap:3,marginTop:2}}>
-                          {p.cercla.contaminants.map(function(c,ci){return <span key={ci} style={{fontSize:fs(9),padding:"1px 5px",background:nplColor+"15",color:nplColor,border:"1px solid "+nplColor+"33"}}>{c}</span>})}
+                          {p.cercla.contaminants.map(function(c,ci){return <span key={ci} style={{fontSize:fs(9),padding:"1px 5px",color:T.textMuted,border:"1px solid "+T.borderLight}}>{c}</span>})}
                         </div>}
                         {p.cercla.url&&<a href={p.cercla.url} target="_blank" rel="noopener noreferrer" onClick={function(e){e.stopPropagation()}} style={{fontSize:fs(9),color:T.link,textDecoration:"none",borderBottom:"1px dotted "+T.link+"44",display:"inline-block",marginTop:4}}>EPA CERCLIS Record →</a>}
                       </div>
@@ -664,6 +664,34 @@ export default function App(){
                 </div>
               </div>
 
+              {/* Computation / Math */}
+              <div style={{marginBottom:16}}>
+                <div style={{color:T.textFaint,fontSize:fs(9),textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:4}}>Computation</div>
+                <div style={{border:"1px solid "+T.borderLight,padding:"12px 14px",fontFamily:T.fontMono,fontSize:fs(10),lineHeight:1.8}}>
+                  <div style={{color:T.textMuted,marginBottom:4}}>
+                    <span style={{color:T.textFaint}}>Annual base rent</span> = {p.acres.toLocaleString()} acres × ${rate.toLocaleString()}/ac/yr = <span style={{color:T.text,fontWeight:600}}>{fmtFull(res.annualBase)}/yr</span>
+                  </div>
+                  <div style={{color:T.textMuted,marginBottom:4}}>
+                    <span style={{color:T.textFaint}}>Method</span> = {method==="simple"?"Flat annual (no adjustment)":method==="compound"?"Compound interest ("+interest+"%/yr)":"CPI-adjusted (BLS CPI-U)"}
+                  </div>
+                  <div style={{color:T.textMuted,marginBottom:4}}>
+                    <span style={{color:T.textFaint}}>Period</span> = {res.startYear}–{res.endYear} ({res.years} years)
+                  </div>
+                  {method==="simple"&&<div style={{color:T.textMuted}}>
+                    <span style={{color:T.textFaint}}>Total</span> = {fmtFull(res.annualBase)} × {res.years} yrs = <span style={{color:T.accent,fontWeight:700}}>{fmtFull(res.total)}</span>
+                  </div>}
+                  {method==="compound"&&<div style={{color:T.textMuted}}>
+                    <span style={{color:T.textFaint}}>Total</span> = {"Σ"} {fmtFull(res.annualBase)} × (1 + {interest}%)<sup>n</sup> for n=0…{res.years-1} = <span style={{color:T.accent,fontWeight:700}}>{fmtFull(res.total)}</span>
+                  </div>}
+                  {method==="cpi"&&<div style={{color:T.textMuted}}>
+                    <span style={{color:T.textFaint}}>Total</span> = {"Σ"} {fmtFull(res.annualBase)} × <a href="https://www.bls.gov/cpi/" target="_blank" rel="noopener noreferrer" style={{color:T.link,textDecoration:"none",borderBottom:"1px dotted "+T.link+"44"}}>CPI(year)</a>/CPI({res.startYear}) = <span style={{color:T.accent,fontWeight:700}}>{fmtFull(res.total)}</span>
+                  </div>}
+                  <div style={{color:T.textFaintest,fontSize:fs(9),marginTop:6}}>
+                    Rate: <a href="https://www.nass.usda.gov/Publications/Todays_Reports/reports/land0823.pdf" target="_blank" rel="noopener noreferrer" style={{color:T.link,textDecoration:"none",borderBottom:"1px dotted "+T.link+"44"}}>{rateLabel}</a>
+                  </div>
+                </div>
+              </div>
+
               {/* Acquisition */}
               <div style={{marginBottom:16}}>
                 <div style={{color:T.textFaint,fontSize:fs(9),textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:4}}>Acquisition</div>
@@ -682,16 +710,16 @@ export default function App(){
                 var nplLabel=p.cercla.npl===true?"SUPERFUND (NPL)":p.cercla.npl==="deleted"?"DELETED FROM NPL":"NOT ON NPL";
                 return <div style={{marginBottom:16}}>
                   <div style={{color:T.textFaint,fontSize:fs(9),textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:4}}>EPA / CERCLA Status</div>
-                  <div style={{background:nplColor+"0d",border:"1px solid "+nplColor+"33",padding:"12px 14px"}}>
+                  <div style={{border:"1px solid "+T.borderLight,padding:"12px 14px"}}>
                     <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6,flexWrap:"wrap"}}>
                       {icons.map(function(ic,ii){return <span key={ii} title={ic.label} style={{fontSize:fs(16),cursor:"help"}}>{ic.icon}</span>})}
-                      <span style={{fontSize:fs(10),fontWeight:700,color:nplColor,letterSpacing:"0.08em",textTransform:"uppercase",marginLeft:4}}>{nplLabel}</span>
+                      <a href="https://www.epa.gov/superfund/superfund-national-priorities-list-npl" target="_blank" rel="noopener noreferrer" style={{fontSize:fs(10),fontWeight:700,color:nplColor,letterSpacing:"0.08em",textTransform:"uppercase",marginLeft:4,textDecoration:"none",borderBottom:"1px dotted "+nplColor+"66",cursor:"pointer"}} title="National Priorities List — EPA's list of the most serious uncontrolled or abandoned hazardous waste sites">{nplLabel}</a>
                       {p.cercla.epaId&&<span style={{fontSize:fs(10),color:T.textFaintest,marginLeft:"auto"}}>EPA: {p.cercla.epaId}</span>}
                     </div>
                     {p.cercla.status&&<div style={{fontSize:fs(11),color:T.textMuted,lineHeight:1.5,marginBottom:4}}>{p.cercla.status}</div>}
                     {p.cercla.nplNote&&<div style={{fontSize:fs(10),color:T.textFaintest,fontStyle:"italic",marginBottom:4}}>{p.cercla.nplNote}</div>}
                     {p.cercla.contaminants&&p.cercla.contaminants.length>0&&<div style={{display:"flex",flexWrap:"wrap",gap:4,marginTop:4}}>
-                      {p.cercla.contaminants.map(function(c,ci){return <span key={ci} style={{fontSize:fs(10),padding:"2px 7px",background:nplColor+"15",color:nplColor,border:"1px solid "+nplColor+"33"}}>{c}</span>})}
+                      {p.cercla.contaminants.map(function(c,ci){return <span key={ci} style={{fontSize:fs(10),padding:"2px 7px",color:T.textMuted,border:"1px solid "+T.borderLight}}>{c}</span>})}
                     </div>}
                     {p.cercla.url&&<a href={p.cercla.url} target="_blank" rel="noopener noreferrer" style={{fontSize:fs(10),color:T.link,textDecoration:"none",borderBottom:"1px dotted "+T.link+"44",display:"inline-block",marginTop:6}}>EPA CERCLIS Record →</a>}
                   </div>

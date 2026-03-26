@@ -80,6 +80,7 @@ export default function App(){
   var [activeNav,setActiveNav]=useState("summary");
   var [showTreemap,setShowTreemap]=useState(false);
   var [hoverParcel,setHoverParcel]=useState(null);
+  var [navOpen,setNavOpen]=useState(false);
   var [detailParcel,setDetailParcel]=useState(function(){
     var h=window.location.hash;
     if(h&&h.indexOf("#parcel/")===0)return h.slice(8);
@@ -303,29 +304,46 @@ export default function App(){
       </header>
 
 
-      {/* STICKY NAV */}
+      {/* STICKY NAV — collapses to hamburger on small screens */}
       <nav style={{position:"sticky",top:0,zIndex:100,background:T.navBg,backdropFilter:"blur(8px)",WebkitBackdropFilter:"blur(8px)",borderBottom:"1px solid "+T.border,padding:"0 32px"}}>
-        <div style={{maxWidth:1020,margin:"0 auto",display:"flex",gap:0,overflow:"auto"}}>
-          {NAV_ITEMS.map(function(n){
-            var isActive=activeNav===n.id;
-            return <button key={n.id} onClick={function(){scrollTo(n.id)}} style={{
-              background:"none",border:"none",borderBottom:isActive?"2px solid "+T.accent:"2px solid transparent",
-              color:isActive?T.accent:T.textFaint,padding:"10px 16px",cursor:"pointer",
-              fontFamily:T.fontMono,fontSize:fs(11),letterSpacing:"0.06em",
-              textTransform:"uppercase",whiteSpace:"nowrap",transition:"all 0.15s",
-            }}>{n.label}</button>
-          })}
-          <div style={{flex:1}}/>
-          <div style={{display:"flex",alignItems:"center",gap:6,padding:"0 4px"}}>
-            <span style={{color:T.accent,fontSize:fs(13),fontWeight:700,fontFamily:T.fontMono}}>{fmt(grandTotal)}</span>
-            <span style={{color:T.textFaintest,fontSize:fs(10),marginRight:8}}>{totalAcres.toLocaleString()} ac</span>
+        <div style={{maxWidth:1020,margin:"0 auto",display:"flex",alignItems:"center",gap:0,minHeight:42}}>
+          {/* Hamburger toggle — visible only on small screens via CSS class */}
+          <button className="nav-hamburger" onClick={function(){setNavOpen(!navOpen)}} style={{background:"none",border:"none",color:T.textMuted,fontSize:20,cursor:"pointer",padding:"6px 8px 6px 0",display:"none",fontFamily:"monospace"}}>{navOpen?"\u2715":"\u2630"}</button>
+          {/* Total always visible on mobile */}
+          <span className="nav-mobile-total" style={{display:"none",color:T.accent,fontSize:fs(13),fontWeight:700,fontFamily:T.fontMono,marginRight:"auto"}}>{fmt(grandTotal)}</span>
+          {/* Desktop nav items */}
+          <div className={"nav-items"+(navOpen?" nav-open":"")} style={{display:"flex",gap:0,overflow:"auto",flex:1}}>
+            {NAV_ITEMS.map(function(n){
+              var isActive=activeNav===n.id;
+              return <button key={n.id} onClick={function(){scrollTo(n.id);setNavOpen(false)}} style={{
+                background:"none",border:"none",borderBottom:isActive?"2px solid "+T.accent:"2px solid transparent",
+                color:isActive?T.accent:T.textFaint,padding:"10px 16px",cursor:"pointer",
+                fontFamily:T.fontMono,fontSize:fs(11),letterSpacing:"0.06em",
+                textTransform:"uppercase",whiteSpace:"nowrap",transition:"all 0.15s",
+              }}>{n.label}</button>
+            })}
+          </div>
+          <div style={{display:"flex",alignItems:"center",gap:6,padding:"0 4px",flexShrink:0}}>
+            <span className="nav-desktop-total" style={{color:T.accent,fontSize:fs(13),fontWeight:700,fontFamily:T.fontMono}}>{fmt(grandTotal)}</span>
+            <span className="nav-desktop-total" style={{color:T.textFaintest,fontSize:fs(10),marginRight:8}}>{totalAcres.toLocaleString()} ac</span>
             <button onClick={function(){setShowTreemap(true)}} title="Land distribution treemap" style={{background:"none",border:"1px solid "+T.borderInput,color:T.textMuted,padding:"0 8px",height:26,cursor:"pointer",fontFamily:T.fontMono,fontSize:fs(9),letterSpacing:"0.04em",textTransform:"uppercase",display:"flex",alignItems:"center"}}>Map</button>
-            <button onClick={function(){adjustFont(-0.1)}} title="Decrease text size" style={{background:"none",border:"1px solid "+T.borderInput,color:T.textMuted,width:26,height:26,cursor:"pointer",fontFamily:T.fontMono,fontSize:11,display:"flex",alignItems:"center",justifyContent:"center",padding:0,opacity:fontScale<=0.8?0.3:1}}>A-</button>
-            <button onClick={function(){adjustFont(0.1)}} title="Increase text size" style={{background:"none",border:"1px solid "+T.borderInput,color:T.textMuted,width:26,height:26,cursor:"pointer",fontFamily:T.fontMono,fontSize:11,display:"flex",alignItems:"center",justifyContent:"center",padding:0,opacity:fontScale>=1.4?0.3:1}}>A+</button>
+            <button className="nav-desktop-btn" onClick={function(){adjustFont(-0.1)}} title="Decrease text size" style={{background:"none",border:"1px solid "+T.borderInput,color:T.textMuted,width:26,height:26,cursor:"pointer",fontFamily:T.fontMono,fontSize:11,display:"flex",alignItems:"center",justifyContent:"center",padding:0,opacity:fontScale<=0.8?0.3:1}}>A-</button>
+            <button className="nav-desktop-btn" onClick={function(){adjustFont(0.1)}} title="Increase text size" style={{background:"none",border:"1px solid "+T.borderInput,color:T.textMuted,width:26,height:26,cursor:"pointer",fontFamily:T.fontMono,fontSize:11,display:"flex",alignItems:"center",justifyContent:"center",padding:0,opacity:fontScale>=1.4?0.3:1}}>A+</button>
             <button onClick={toggleColor} title={colorMode==="dark"?"Switch to light mode":"Switch to dark mode"} style={{background:"none",border:"1px solid "+T.borderInput,color:T.textMuted,width:26,height:26,cursor:"pointer",fontSize:14,display:"flex",alignItems:"center",justifyContent:"center",padding:0}}>{colorMode==="dark"?"\u2600":"\u263D"}</button>
-            <button onClick={toggleFont} title={fontMode==="mono"?"Switch to Helvetica":"Switch to Mono"} style={{background:"none",border:"1px solid "+T.borderInput,color:fontMode==="helvetica"?T.accent:T.textMuted,width:26,height:26,cursor:"pointer",fontSize:11,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",padding:0,fontFamily:FONT_THEMES.helvetica.fontBody}}>H</button>
+            <button className="nav-desktop-btn" onClick={toggleFont} title={fontMode==="mono"?"Switch to Helvetica":"Switch to Mono"} style={{background:"none",border:"1px solid "+T.borderInput,color:fontMode==="helvetica"?T.accent:T.textMuted,width:26,height:26,cursor:"pointer",fontSize:11,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",padding:0,fontFamily:FONT_THEMES.helvetica.fontBody}}>H</button>
           </div>
         </div>
+        {/* Responsive CSS */}
+        <style>{"\
+@media(max-width:640px){\
+.nav-hamburger{display:flex!important}\
+.nav-mobile-total{display:block!important}\
+.nav-desktop-total{display:none!important}\
+.nav-desktop-btn{display:none!important}\
+.nav-items{display:none!important;flex-direction:column;position:absolute;top:42px;left:0;right:0;background:"+T.bg+";border-bottom:1px solid rgba(128,128,128,0.2);padding:4px 0;z-index:101;box-shadow:0 4px 12px rgba(0,0,0,0.3)}\
+.nav-items.nav-open{display:flex!important}\
+.nav-items button{text-align:left;padding:10px 24px!important;border-bottom:none!important}\
+}"}</style>
       </nav>
 
       <main style={{maxWidth:1020,margin:"0 auto",padding:"24px 32px 60px"}}>
@@ -422,10 +440,10 @@ export default function App(){
                     <div style={{width:14,height:14,marginTop:2,border:isSel?"2px solid "+cat.c:"2px solid "+T.checkBorder,background:isSel?cat.c:"transparent",display:"flex",alignItems:"center",justifyContent:"center",fontSize:fs(10),color:T.accentText,flexShrink:0}}>{isSel&&"\u2713"}</div>
                     <div style={{minWidth:0}}>
                       <div style={{display:"flex",alignItems:"baseline",gap:8,flexWrap:"wrap"}}>
-                        <span style={{color:T.text,fontSize:fs(13),fontWeight:600}}>{p.name}</span>
+                        <a onClick={function(e){e.preventDefault();e.stopPropagation();openDetail(p.id)}} href={"#parcel/"+p.id} style={{color:T.text,fontSize:fs(13),fontWeight:600,textDecoration:"none",borderBottom:"1px solid transparent",cursor:"pointer"}} onMouseEnter={function(e){e.currentTarget.style.borderBottomColor=T.accent}} onMouseLeave={function(e){e.currentTarget.style.borderBottomColor="transparent"}}>{p.name}</a>
                         <span style={{color:T.textFaintest,fontSize:fs(11)}}>{p.island}</span>
                         <span style={{fontSize:fs(9),padding:"1px 5px",background:cat.c+"18",color:cat.c,border:"1px solid "+cat.c+"33"}}>{CATEGORY_LABELS[p.category]}</span>
-                        {p.cercla&&<span style={{fontSize:fs(9),padding:"1px 5px",background:p.cercla.npl===true?"#e74c3c18":p.cercla.npl==="deleted"?"#27ae6018":"#f39c1218",color:p.cercla.npl===true?"#e74c3c":p.cercla.npl==="deleted"?"#27ae60":"#f39c12",border:"1px solid "+(p.cercla.npl===true?"#e74c3c33":p.cercla.npl==="deleted"?"#27ae6033":"#f39c1233")}}>{p.cercla.npl===true?"\uD83D\uDD34 NPL":p.cercla.npl==="deleted"?"\uD83D\uDFE2 NPL-DEL":"\uD83D\uDFE1 CERCLA"}{p.cercla.contaminants&&p.cercla.contaminants.length>0?" ("+p.cercla.contaminants.length+")":""}</span>}
+                        {p.cercla&&<span style={{fontSize:fs(9),padding:"1px 5px",color:p.cercla.npl===true?"#e74c3c":p.cercla.npl==="deleted"?"#27ae60":"#f39c12",border:"1px solid "+(p.cercla.npl===true?"#e74c3c33":p.cercla.npl==="deleted"?"#27ae6033":"#f39c1233")}}>{p.cercla.npl===true?"\uD83D\uDD34 NPL":p.cercla.npl==="deleted"?"\uD83D\uDFE2 NPL-DEL":"\uD83D\uDFE1 CERCLA"}{p.cercla.contaminants&&p.cercla.contaminants.length>0?" ("+p.cercla.contaminants.length+")":""}</span>}
                       </div>
                       <div style={{color:T.textFaint,fontSize:fs(10),marginTop:2}}>{p.acres.toLocaleString()} ac | {p.acquisitionMethod} | {res.startYear}-{res.endYear} ({res.years} yrs)</div>
                       {isSel&&<div style={{color:T.textMuted,fontSize:fs(10),marginTop:2}}>Base: {fmtFull(res.annualBase)}/yr</div>}
@@ -435,38 +453,48 @@ export default function App(){
                       <div style={{color:T.textFaintest,fontSize:fs(10)}}>{p.acres.toLocaleString()} ac</div>
                     </div>
                   </div>
-                  {/* Expandable detail */}
+                  {/* Expandable detail — parcel info and CERCLA side by side */}
                   {isSel&&<div style={{padding:"0 14px 10px 42px"}}>
-                    {p.notes&&<div style={{color:T.textFaintest,fontSize:fs(10),lineHeight:1.4,marginBottom:4}}>{p.notes}</div>}
-                    {p.sources&&p.sources.length>0&&<div style={{display:"flex",flexWrap:"wrap",gap:4,marginBottom:4}}>
-                      {p.sources.map(function(src,si){return src.url?<a key={si} href={src.url} target="_blank" rel="noopener noreferrer" onClick={function(e){e.stopPropagation()}} style={{fontSize:fs(9),color:T.link,textDecoration:"none",borderBottom:"1px dotted "+T.link+"44"}}>{src.label}</a>:<span key={si} style={{fontSize:fs(9),color:T.link}}>{src.label}</span>})}
-                    </div>}
-                    {p.cercla&&(function(){
-                      var icons=getCerclaIcons(p.cercla);
-                      var nplColor=p.cercla.npl===true?"#e74c3c":p.cercla.npl==="deleted"?"#27ae60":"#f39c12";
-                      var nplLabel=p.cercla.npl===true?"SUPERFUND (NPL)":p.cercla.npl==="deleted"?"DELETED FROM NPL":"NOT ON NPL";
-                      return <div style={{border:"1px solid "+T.borderLight,padding:"8px 10px",marginBottom:6}} onClick={function(e){e.stopPropagation()}}>
-                        <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4,flexWrap:"wrap"}}>
-                          {icons.map(function(ic,ii){return <span key={ii} title={ic.label} style={{fontSize:fs(14),cursor:"help"}}>{ic.icon}</span>})}
-                          <a href="https://www.epa.gov/superfund/superfund-national-priorities-list-npl" target="_blank" rel="noopener noreferrer" onClick={function(e){e.stopPropagation()}} style={{fontSize:fs(9),fontWeight:700,color:nplColor,letterSpacing:"0.08em",textTransform:"uppercase",marginLeft:4,textDecoration:"none",borderBottom:"1px dotted "+nplColor+"66",cursor:"pointer"}} title="National Priorities List — EPA's list of the most serious uncontrolled or abandoned hazardous waste sites">{nplLabel}</a>
-                          {p.cercla.epaId&&<span style={{fontSize:fs(9),color:T.textFaintest,marginLeft:"auto"}}>EPA: {p.cercla.epaId}</span>}
-                        </div>
-                        {p.cercla.status&&<div style={{fontSize:fs(10),color:T.textMuted,lineHeight:1.4,marginBottom:3}}>{p.cercla.status}</div>}
-                        {p.cercla.nplNote&&<div style={{fontSize:fs(9),color:T.textFaintest,fontStyle:"italic",marginBottom:3}}>{p.cercla.nplNote}</div>}
-                        {p.cercla.contaminants&&p.cercla.contaminants.length>0&&<div style={{display:"flex",flexWrap:"wrap",gap:3,marginTop:2}}>
-                          {p.cercla.contaminants.map(function(c,ci){return <span key={ci} style={{fontSize:fs(9),padding:"1px 5px",color:T.textMuted,border:"1px solid "+T.borderLight}}>{c}</span>})}
+                    <div className="parcel-expand-row" style={{display:"flex",gap:12,marginBottom:6}}>
+                      {/* Left: parcel info */}
+                      <div style={{flex:1,minWidth:0}}>
+                        {p.notes&&<div style={{color:T.textFaintest,fontSize:fs(10),lineHeight:1.4,marginBottom:4}}>{p.notes}</div>}
+                        {p.sources&&p.sources.length>0&&<div style={{display:"flex",flexWrap:"wrap",gap:4,marginBottom:4}}>
+                          {p.sources.map(function(src,si){return src.url?<a key={si} href={src.url} target="_blank" rel="noopener noreferrer" onClick={function(e){e.stopPropagation()}} style={{fontSize:fs(9),color:T.link,textDecoration:"none",borderBottom:"1px dotted "+T.link+"44"}}>{src.label}</a>:<span key={si} style={{fontSize:fs(9),color:T.link}}>{src.label}</span>})}
                         </div>}
-                        {p.cercla.url&&<a href={p.cercla.url} target="_blank" rel="noopener noreferrer" onClick={function(e){e.stopPropagation()}} style={{fontSize:fs(9),color:T.link,textDecoration:"none",borderBottom:"1px dotted "+T.link+"44",display:"inline-block",marginTop:4}}>EPA CERCLIS Record →</a>}
+                        <div style={{display:"flex",gap:6}}>
+                          <button onClick={function(e){e.stopPropagation();openDetail(p.id)}} style={{background:"none",border:"1px solid "+T.borderLight,color:T.accent,padding:"2px 8px",fontSize:fs(9),cursor:"pointer",fontFamily:T.fontMono}}>Detail →</button>
+                          <button onClick={function(e){e.stopPropagation();setExpandedParcel(isExpanded?null:p.id)}} style={{background:"none",border:"1px solid "+T.borderLight,color:T.textFaint,padding:"2px 8px",fontSize:fs(9),cursor:"pointer",fontFamily:T.fontMono}}>{isExpanded?"Hide":"Show"} year-by-year</button>
+                        </div>
                       </div>
-                    })()}
-                    <div style={{display:"flex",gap:6}}>
-                      <button onClick={function(e){e.stopPropagation();openDetail(p.id)}} style={{background:"none",border:"1px solid "+T.borderLight,color:T.accent,padding:"2px 8px",fontSize:fs(9),cursor:"pointer",fontFamily:T.fontMono}}>Detail →</button>
-                      <button onClick={function(e){e.stopPropagation();setExpandedParcel(isExpanded?null:p.id)}} style={{background:"none",border:"1px solid "+T.borderLight,color:T.textFaint,padding:"2px 8px",fontSize:fs(9),cursor:"pointer",fontFamily:T.fontMono}}>{isExpanded?"Hide":"Show"} year-by-year</button>
+                      {/* Right: CERCLA box (constrained width) */}
+                      {p.cercla&&(function(){
+                        var icons=getCerclaIcons(p.cercla);
+                        var nplColor=p.cercla.npl===true?"#e74c3c":p.cercla.npl==="deleted"?"#27ae60":"#f39c12";
+                        var nplLabel=p.cercla.npl===true?"SUPERFUND (NPL)":p.cercla.npl==="deleted"?"DELETED FROM NPL":"NOT ON NPL";
+                        return <div className="parcel-cercla-box" style={{width:260,flexShrink:0,border:"1px solid "+T.borderLight,padding:"8px 10px",fontSize:fs(9)}} onClick={function(e){e.stopPropagation()}}>
+                          <div style={{display:"flex",alignItems:"center",gap:4,marginBottom:4,flexWrap:"wrap"}}>
+                            {icons.map(function(ic,ii){return <span key={ii} title={ic.label} style={{fontSize:fs(12),cursor:"help"}}>{ic.icon}</span>})}
+                            <a href="https://www.epa.gov/superfund/superfund-national-priorities-list-npl" target="_blank" rel="noopener noreferrer" onClick={function(e){e.stopPropagation()}} style={{fontSize:fs(8),fontWeight:700,color:nplColor,letterSpacing:"0.08em",textTransform:"uppercase",textDecoration:"none",borderBottom:"1px dotted "+nplColor+"66",cursor:"pointer"}} title="National Priorities List — EPA's list of the most serious uncontrolled or abandoned hazardous waste sites">{nplLabel}</a>
+                          </div>
+                          {p.cercla.epaId&&<div style={{color:T.textFaintest,fontSize:fs(8),marginBottom:3}}>EPA: {p.cercla.epaId}</div>}
+                          {p.cercla.status&&<div style={{color:T.textMuted,fontSize:fs(9),lineHeight:1.3,marginBottom:3}}>{p.cercla.status}</div>}
+                          {p.cercla.contaminants&&p.cercla.contaminants.length>0&&<div style={{display:"flex",flexWrap:"wrap",gap:2,marginTop:2}}>
+                            {p.cercla.contaminants.map(function(c,ci){return <span key={ci} style={{fontSize:fs(8),padding:"1px 4px",color:T.textMuted,border:"1px solid "+T.borderLight}}>{c}</span>})}
+                          </div>}
+                          {p.cercla.url&&<a href={p.cercla.url} target="_blank" rel="noopener noreferrer" onClick={function(e){e.stopPropagation()}} style={{fontSize:fs(8),color:T.link,textDecoration:"none",borderBottom:"1px dotted "+T.link+"44",display:"inline-block",marginTop:3}}>EPA CERCLIS Record →</a>}
+                        </div>
+                      })()}
                     </div>
                     {isExpanded&&<div style={{maxHeight:200,overflowY:"auto",background:T.bgExpand,border:"1px solid "+T.border,fontSize:fs(11),marginTop:6}}>
                       <div style={{display:"grid",gridTemplateColumns:"70px 1fr 110px",padding:"4px 10px",color:T.textFaintest,borderBottom:"1px solid "+T.border,position:"sticky",top:0,background:T.bgExpand,fontSize:fs(9),textTransform:"uppercase",letterSpacing:"0.06em"}}><div>Year</div><div></div><div style={{textAlign:"right"}}>Annual Rent</div></div>
                       {res.breakdown.map(function(row){var mx=res.breakdown[res.breakdown.length-1]?res.breakdown[res.breakdown.length-1].rent:1;return <div key={row.year} style={{display:"grid",gridTemplateColumns:"70px 1fr 110px",padding:"2px 10px",borderBottom:"1px solid "+T.borderDark}}><div style={{color:T.textMuted}}>{row.year}</div><div style={{position:"relative",height:8}}><div style={{position:"absolute",left:0,top:0,height:8,background:T.barBg,width:Math.min(100,(row.rent/mx)*100)+"%"}}/></div><div style={{color:T.text,textAlign:"right"}}>{fmtFull(row.rent)}</div></div>})}
                     </div>}
+                    <style>{"\
+@media(max-width:640px){\
+.parcel-expand-row{flex-direction:column!important}\
+.parcel-cercla-box{width:100%!important}\
+}"}</style>
                   </div>}
                 </div>
               })}

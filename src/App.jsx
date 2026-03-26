@@ -280,6 +280,48 @@ export default function App(){
     return icons;
   };
 
+  // Known document URLs for auto-linking factual references
+  var DOC_URLS={
+    "Presidential Executive Order 11167":"https://www.presidency.ucsb.edu/documents/executive-order-11167-setting-aside-for-the-use-the-united-states-certain-public-lands-and",
+    "Executive Order 11167":"https://www.presidency.ucsb.edu/documents/executive-order-11167-setting-aside-for-the-use-the-united-states-certain-public-lands-and",
+    "Executive Order 11166":"https://www.presidency.ucsb.edu/documents/executive-order-11166-setting-aside-for-the-use-the-united-states-certain-public-lands-and",
+    "Executive Order 11165":"https://www.presidency.ucsb.edu/documents/executive-order-11165-setting-aside-for-the-use-the-united-states-certain-public-lands-and",
+    "EO 11167":"https://www.presidency.ucsb.edu/documents/executive-order-11167-setting-aside-for-the-use-the-united-states-certain-public-lands-and",
+    "EO 11166":"https://www.presidency.ucsb.edu/documents/executive-order-11166-setting-aside-for-the-use-the-united-states-certain-public-lands-and",
+    "EO 11165":"https://www.presidency.ucsb.edu/documents/executive-order-11165-setting-aside-for-the-use-the-united-states-certain-public-lands-and",
+    "EO 10436":"https://www.presidency.ucsb.edu/documents/executive-order-10436-reserving-kahoolawe-island-territory-hawaii-for-the-use-the-united",
+    "EO 10453":"https://www.presidency.ucsb.edu/documents/executive-order-10453-restoring-certain-lands-comprising-portions-the-fort-ruger-military",
+    "EO 10404":"https://www.presidency.ucsb.edu/documents/executive-order-10404-resorting-certain-land-reserved-for-military-purposes-the-territory",
+    "EO 2521":"https://www.presidency.ucsb.edu/documents/executive-order-10404-resorting-certain-land-reserved-for-military-purposes-the-territory",
+    "EO 395-A":"https://en.wikipedia.org/wiki/Fort_Ruger",
+    "Section 5(d)":"https://www.law.cornell.edu/topn/hawaii_admission_act",
+    "Sec 5(d)":"https://www.law.cornell.edu/topn/hawaii_admission_act",
+    "5(d)":"https://www.law.cornell.edu/topn/hawaii_admission_act",
+    "5(b)":"https://www.law.cornell.edu/topn/hawaii_admission_act",
+    "5(f)":"https://www.law.cornell.edu/topn/hawaii_admission_act",
+    "Admission Act":"https://www.law.cornell.edu/topn/hawaii_admission_act",
+    "PL 103-150":"https://www.congress.gov/bill/103rd-congress/senate-joint-resolution/19/text",
+    "Apology Resolution":"https://www.congress.gov/bill/103rd-congress/senate-joint-resolution/19/text",
+    "HMLUMP 2021":"https://drive.google.com/file/d/1Uov0HevmHkfMG-ma-iEzxYgECHue67aY/view",
+    "HMLUMP":"https://drive.google.com/file/d/1Uov0HevmHkfMG-ma-iEzxYgECHue67aY/view",
+    "HR 199":"https://data.capitol.hawaii.gov/sessions/session2025/bills/HR199_.HTM",
+  };
+  // Build regex: sort keys longest-first so "EO 11167" matches before "EO 11"
+  var DOC_KEYS=Object.keys(DOC_URLS).sort(function(a,b){return b.length-a.length});
+  var DOC_RE=new RegExp("("+DOC_KEYS.map(function(k){return k.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")}).join("|")+")","g");
+  var linkifyText=function(text){
+    if(!text)return null;
+    var parts=[];var last=0;var m;
+    DOC_RE.lastIndex=0;
+    while((m=DOC_RE.exec(text))!==null){
+      if(m.index>last)parts.push(text.slice(last,m.index));
+      parts.push(<a key={m.index} href={DOC_URLS[m[0]]} target="_blank" rel="noopener noreferrer" className="src-link">{m[0]}</a>);
+      last=m.index+m[0].length;
+    }
+    if(last<text.length)parts.push(text.slice(last));
+    return parts;
+  };
+
   var genShare=function(){var t="BACK RENT COMPUTATION - FEDERAL-SEIZED CEDED LANDS\nState of Hawaii - "+new Date().toLocaleDateString()+"\n"+"=".repeat(52)+"\n\nMethod: "+(method==="simple"?"Flat":method==="compound"?"Compound ("+interest+"%)":"CPI-Adjusted")+"\nRate: "+rateLabel+" - $"+rate.toFixed(2)+"/acre/year\n\n";CATS.forEach(function(cat){var cr=results.filter(function(r){return r.parcel.category===cat.k});if(!cr.length)return;t+="-- "+cat.h+" "+"-".repeat(Math.max(0,40-cat.h.length))+"\n";cr.forEach(function(r){t+="  > "+r.parcel.name+"\n    "+r.parcel.acres.toLocaleString()+" ac - "+r.parcel.island+" - "+r.result.startYear+"-"+r.result.endYear+"\n    Owed: "+fmtFull(r.result.total)+"\n\n"})});t+="=".repeat(52)+"\nFEDERAL-OWNED: "+fedAcres.toLocaleString()+" ac\nSTATE-LEASED:  "+leaseAcres.toLocaleString()+" ac\nRETURNED:      "+retAcres.toLocaleString()+" ac\nTOTAL ACREAGE: "+totalAcres.toLocaleString()+" ac\nTOTAL PAID:    "+fmtFull(totalPaid)+"\nBACK RENT:     "+fmtFull(grandTotal)+"\n\nSOURCES: EO 11167, EO 11166, EO 11165, 1969 Historical Analysis Table 9,\nDLNR 2026 Leg Report, HMLUMP 2021, Admission Act Sec 5(b)(d)(f)\n";setShareText(t)};
 
   var filtered=filter==="all"?allParcels:allParcels.filter(function(p){return p.category===filter});
@@ -293,6 +335,20 @@ export default function App(){
   return (
     <div style={{minHeight:"100vh",background:T.bg,color:T.text,fontFamily:T.fontBody,transition:"background 0.2s,color 0.2s"}}>
       <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Serif+Display&display=swap" rel="stylesheet"/>
+      <style>{"\
+.src-link{color:"+T.link+";text-decoration:none;border-bottom:1px dotted "+T.link+"66;cursor:pointer}\
+.src-link:hover{border-bottom-style:solid}\
+.section-label{color:"+T.textFaint+";font-size:"+fs(9)+"px;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:4px}\
+.detail-card{border:1px solid "+T.borderLight+";padding:12px 14px}\
+.tag{font-size:"+fs(9)+"px;padding:2px 6px;border:1px solid "+T.borderLight+"}\
+.note-text{color:"+T.textMuted+";font-size:"+fs(11)+"px;line-height:1.6}\
+.meta-text{color:"+T.textMuted+";font-size:"+fs(11)+"px;margin-top:2px}\
+.mono-box{border:1px solid "+T.borderLight+";padding:12px 14px;font-family:"+T.fontMono+";font-size:"+fs(10)+"px;line-height:1.8}\
+.formula-label{color:"+T.textFaint+"}\
+.formula-value{color:"+T.text+";font-weight:600}\
+.formula-total{color:"+T.accent+";font-weight:700}\
+.formula-row{color:"+T.textMuted+";margin-bottom:4px}\
+"}</style>
 
       <header style={{borderBottom:"1px solid "+T.borderLight,padding:"28px 32px",background:T.headerGrad}}>
         <div style={{maxWidth:1020,margin:"0 auto"}}>
@@ -445,7 +501,7 @@ export default function App(){
                         <span style={{fontSize:fs(9),padding:"1px 5px",background:cat.c+"18",color:cat.c,border:"1px solid "+cat.c+"33"}}>{CATEGORY_LABELS[p.category]}</span>
                         {p.cercla&&<span style={{fontSize:fs(9),padding:"1px 5px",color:p.cercla.npl===true?"#e74c3c":p.cercla.npl==="deleted"?"#27ae60":"#f39c12",border:"1px solid "+(p.cercla.npl===true?"#e74c3c33":p.cercla.npl==="deleted"?"#27ae6033":"#f39c1233")}}>{p.cercla.npl===true?"\uD83D\uDD34 NPL":p.cercla.npl==="deleted"?"\uD83D\uDFE2 NPL-DEL":"\uD83D\uDFE1 CERCLA"}{p.cercla.contaminants&&p.cercla.contaminants.length>0?" ("+p.cercla.contaminants.length+")":""}</span>}
                       </div>
-                      <div style={{color:T.textFaint,fontSize:fs(10),marginTop:2}}>{p.acres.toLocaleString()} ac | {p.acquisitionMethod} | {res.startYear}-{res.endYear} ({res.years} yrs)</div>
+                      <div style={{color:T.textFaint,fontSize:fs(10),marginTop:2}}>{p.acres.toLocaleString()} ac | {linkifyText(p.acquisitionMethod)} | {res.startYear}-{res.endYear} ({res.years} yrs)</div>
                       {isSel&&<div style={{color:T.textMuted,fontSize:fs(10),marginTop:2}}>Base: {fmtFull(res.annualBase)}/yr</div>}
                     </div>
                     <div style={{textAlign:"right"}}>
@@ -458,7 +514,7 @@ export default function App(){
                     <div className="parcel-expand-row" style={{display:"flex",gap:12,marginBottom:6}}>
                       {/* Left: parcel info */}
                       <div style={{flex:1,minWidth:0}}>
-                        {p.notes&&<div style={{color:T.textFaintest,fontSize:fs(10),lineHeight:1.4,marginBottom:4}}>{p.notes}</div>}
+                        {p.notes&&<div style={{color:T.textFaintest,fontSize:fs(10),lineHeight:1.4,marginBottom:4}}>{linkifyText(p.notes)}</div>}
                         {p.sources&&p.sources.length>0&&<div style={{display:"flex",flexWrap:"wrap",gap:4,marginBottom:4}}>
                           {p.sources.map(function(src,si){return src.url?<a key={si} href={src.url} target="_blank" rel="noopener noreferrer" onClick={function(e){e.stopPropagation()}} style={{fontSize:fs(9),color:T.link,textDecoration:"none",borderBottom:"1px dotted "+T.link+"44"}}>{src.label}</a>:<span key={si} style={{fontSize:fs(9),color:T.link}}>{src.label}</span>})}
                         </div>}
@@ -676,17 +732,17 @@ export default function App(){
               {/* Key stats grid */}
               <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:1,background:T.border,marginBottom:20}}>
                 <div style={{background:T.bgAlt,padding:"12px 14px",textAlign:"center"}}>
-                  <div style={{color:T.textFaint,fontSize:fs(9),textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:4}}>Acreage</div>
+                  <div className="section-label" style={{marginBottom:4}}>Acreage</div>
                   <div style={{color:T.text,fontSize:fs(18),fontWeight:700}}>{p.acres.toLocaleString()}</div>
-                  {p.sources&&p.sources.length>0&&<div style={{color:T.textFaintest,fontSize:fs(8),marginTop:2}}>per {p.sources[0].label}</div>}
+                  {p.sources&&p.sources.length>0&&<div style={{fontSize:fs(8),marginTop:2}}>{p.sources[0].url?<a href={p.sources[0].url} target="_blank" rel="noopener noreferrer" className="src-link">per {p.sources[0].label}</a>:<span style={{color:T.textFaintest}}>per {p.sources[0].label}</span>}</div>}
                 </div>
                 <div style={{background:T.bgAlt,padding:"12px 14px",textAlign:"center"}}>
-                  <div style={{color:T.textFaint,fontSize:fs(9),textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:4}}>Years Held</div>
+                  <div className="section-label" style={{marginBottom:4}}>Years Held</div>
                   <div style={{color:T.text,fontSize:fs(18),fontWeight:700}}>{res.years}</div>
                   <div style={{color:T.textFaintest,fontSize:fs(9)}}>{res.startYear}–{res.endYear}</div>
                 </div>
                 <div style={{background:T.bgAlt,padding:"12px 14px",textAlign:"center"}}>
-                  <div style={{color:T.textFaint,fontSize:fs(9),textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:4}}>Back Rent Owed</div>
+                  <div className="section-label" style={{marginBottom:4}}>Back Rent Owed</div>
                   <div style={{color:T.accent,fontSize:fs(18),fontWeight:700}}>{fmt(res.total)}</div>
                   <div style={{color:T.textFaintest,fontSize:fs(9)}}>{fmtFull(res.annualBase)}/yr</div>
                 </div>
@@ -694,69 +750,69 @@ export default function App(){
 
               {/* Computation / Math */}
               <div style={{marginBottom:16}}>
-                <div style={{color:T.textFaint,fontSize:fs(9),textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:4}}>Computation</div>
-                <div style={{border:"1px solid "+T.borderLight,padding:"12px 14px",fontFamily:T.fontMono,fontSize:fs(10),lineHeight:1.8}}>
-                  <div style={{color:T.textMuted,marginBottom:4}}>
-                    <span style={{color:T.textFaint}}>Annual base rent</span> = {p.acres.toLocaleString()} acres × ${rate.toLocaleString()}/ac/yr = <span style={{color:T.text,fontWeight:600}}>{fmtFull(res.annualBase)}/yr</span>
+                <div className="section-label">Computation</div>
+                <div className="mono-box">
+                  <div className="formula-row">
+                    <span className="formula-label">Annual base rent</span> = {p.acres.toLocaleString()} acres × ${rate.toLocaleString()}/ac/yr = <span className="formula-value">{fmtFull(res.annualBase)}/yr</span>
                   </div>
-                  <div style={{color:T.textMuted,marginBottom:4}}>
-                    <span style={{color:T.textFaint}}>Method</span> = {method==="simple"?"Flat annual (no adjustment)":method==="compound"?"Compound interest ("+interest+"%/yr)":"CPI-adjusted (BLS CPI-U)"}
+                  <div className="formula-row">
+                    <span className="formula-label">Method</span> = {method==="simple"?"Flat annual (no adjustment)":method==="compound"?"Compound interest ("+interest+"%/yr)":<span>CPI-adjusted (<a href="https://www.bls.gov/cpi/" target="_blank" rel="noopener noreferrer" className="src-link">BLS CPI-U</a>)</span>}
                   </div>
-                  <div style={{color:T.textMuted,marginBottom:4}}>
-                    <span style={{color:T.textFaint}}>Period</span> = {res.startYear}–{res.endYear} ({res.years} years)
+                  <div className="formula-row">
+                    <span className="formula-label">Period</span> = {res.startYear}–{res.endYear} ({res.years} years)
                   </div>
-                  {method==="simple"&&<div style={{color:T.textMuted}}>
-                    <span style={{color:T.textFaint}}>Total</span> = {fmtFull(res.annualBase)} × {res.years} yrs = <span style={{color:T.accent,fontWeight:700}}>{fmtFull(res.total)}</span>
+                  {method==="simple"&&<div className="formula-row">
+                    <span className="formula-label">Total</span> = {fmtFull(res.annualBase)} × {res.years} yrs = <span className="formula-total">{fmtFull(res.total)}</span>
                   </div>}
-                  {method==="compound"&&<div style={{color:T.textMuted}}>
-                    <span style={{color:T.textFaint}}>Total</span> = {"Σ"} {fmtFull(res.annualBase)} × (1 + {interest}%)<sup>n</sup> for n=0…{res.years-1} = <span style={{color:T.accent,fontWeight:700}}>{fmtFull(res.total)}</span>
+                  {method==="compound"&&<div className="formula-row">
+                    <span className="formula-label">Total</span> = {"Σ"} {fmtFull(res.annualBase)} × (1 + {interest}%)<sup>n</sup> for n=0…{res.years-1} = <span className="formula-total">{fmtFull(res.total)}</span>
                   </div>}
-                  {method==="cpi"&&<div style={{color:T.textMuted}}>
-                    <span style={{color:T.textFaint}}>Total</span> = {"Σ"} {fmtFull(res.annualBase)} × <a href="https://www.bls.gov/cpi/" target="_blank" rel="noopener noreferrer" style={{color:T.link,textDecoration:"none",borderBottom:"1px dotted "+T.link+"44"}}>CPI(year)</a>/CPI({res.startYear}) = <span style={{color:T.accent,fontWeight:700}}>{fmtFull(res.total)}</span>
+                  {method==="cpi"&&<div className="formula-row">
+                    <span className="formula-label">Total</span> = {"Σ"} {fmtFull(res.annualBase)} × <a href="https://www.bls.gov/cpi/" target="_blank" rel="noopener noreferrer" className="src-link">CPI(year)</a>/CPI({res.startYear}) = <span className="formula-total">{fmtFull(res.total)}</span>
                   </div>}
                   <div style={{color:T.textFaintest,fontSize:fs(9),marginTop:6}}>
-                    Rate: <a href="https://www.nass.usda.gov/Publications/Todays_Reports/reports/land0823.pdf" target="_blank" rel="noopener noreferrer" style={{color:T.link,textDecoration:"none",borderBottom:"1px dotted "+T.link+"44"}}>{rateLabel}</a>
+                    Rate: <a href="https://www.nass.usda.gov/Publications/Todays_Reports/reports/land0823.pdf" target="_blank" rel="noopener noreferrer" className="src-link">{rateLabel}</a>
                   </div>
                 </div>
               </div>
 
               {/* Acquisition */}
               <div style={{marginBottom:16}}>
-                <div style={{color:T.textFaint,fontSize:fs(9),textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:4}}>Acquisition</div>
-                <div style={{color:T.text,fontSize:fs(12)}}>{p.acquisitionMethod}</div>
-                <div style={{color:T.textMuted,fontSize:fs(11),marginTop:2}}>Acquired {p.acquisitionYear} · Zoning: {p.zoning||"—"} · {p.cededLand?"Ceded land":"Not ceded"}{p.leaseEnd?" · Lease expires "+p.leaseEnd:""}{p.leaseCost!=null?" · Paid: $"+p.leaseCost:""}</div>
+                <div className="section-label">Acquisition</div>
+                <div style={{color:T.text,fontSize:fs(12)}}>{linkifyText(p.acquisitionMethod)}</div>
+                <div className="meta-text">Acquired {p.acquisitionYear} · Zoning: {p.zoning||"—"} · {p.cededLand?<a href="https://www.law.cornell.edu/topn/hawaii_admission_act" target="_blank" rel="noopener noreferrer" className="src-link">Ceded land</a>:"Not ceded"}{p.leaseEnd?" · Lease expires "+p.leaseEnd:""}{p.leaseCost!=null?" · Paid: $"+p.leaseCost:""}</div>
               </div>
 
               {/* Notes */}
               {p.notes&&<div style={{marginBottom:16}}>
-                <div style={{color:T.textFaint,fontSize:fs(9),textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:4}}>Notes</div>
-                <div style={{color:T.textMuted,fontSize:fs(11),lineHeight:1.6}}>{p.notes}</div>
+                <div className="section-label">Notes</div>
+                <div className="note-text">{linkifyText(p.notes)}</div>
               </div>}
 
               {/* CERCLA */}
               {p.cercla&&(function(){
                 var nplLabel=p.cercla.npl===true?"SUPERFUND (NPL)":p.cercla.npl==="deleted"?"DELETED FROM NPL":"NOT ON NPL";
                 return <div style={{marginBottom:16}}>
-                  <div style={{color:T.textFaint,fontSize:fs(9),textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:4}}>EPA / CERCLA Status</div>
-                  <div style={{border:"1px solid "+T.borderLight,padding:"12px 14px"}}>
+                  <div className="section-label">EPA / CERCLA Status</div>
+                  <div className="detail-card">
                     <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6,flexWrap:"wrap"}}>
                       {icons.map(function(ic,ii){return <span key={ii} title={ic.label} style={{fontSize:fs(16),cursor:"help"}}>{ic.icon}</span>})}
-                      <a href="https://www.epa.gov/superfund/superfund-national-priorities-list-npl" target="_blank" rel="noopener noreferrer" style={{fontSize:fs(10),fontWeight:700,color:nplColor,letterSpacing:"0.08em",textTransform:"uppercase",marginLeft:4,textDecoration:"none",borderBottom:"1px dotted "+nplColor+"66",cursor:"pointer"}} title="National Priorities List — EPA's list of the most serious uncontrolled or abandoned hazardous waste sites">{nplLabel}</a>
-                      {p.cercla.epaId&&<span style={{fontSize:fs(10),color:T.textFaintest,marginLeft:"auto"}}>EPA: {p.cercla.epaId}</span>}
+                      <a href="https://www.epa.gov/superfund/superfund-national-priorities-list-npl" target="_blank" rel="noopener noreferrer" style={{fontSize:fs(10),fontWeight:700,color:nplColor,letterSpacing:"0.08em",textTransform:"uppercase",marginLeft:4}} className="src-link" title="National Priorities List — EPA's list of the most serious uncontrolled or abandoned hazardous waste sites">{nplLabel}</a>
+                      {p.cercla.epaId&&<a href={p.cercla.url||"#"} target="_blank" rel="noopener noreferrer" className="src-link" style={{fontSize:fs(10),color:T.textFaintest,marginLeft:"auto"}}>EPA: {p.cercla.epaId}</a>}
                     </div>
-                    {p.cercla.status&&<div style={{fontSize:fs(11),color:T.textMuted,lineHeight:1.5,marginBottom:4}}>{p.cercla.status}</div>}
+                    {p.cercla.status&&<div className="note-text" style={{fontSize:fs(11),marginBottom:4}}>{p.cercla.status}</div>}
                     {p.cercla.nplNote&&<div style={{fontSize:fs(10),color:T.textFaintest,fontStyle:"italic",marginBottom:4}}>{p.cercla.nplNote}</div>}
                     {p.cercla.contaminants&&p.cercla.contaminants.length>0&&<div style={{display:"flex",flexWrap:"wrap",gap:4,marginTop:4}}>
-                      {p.cercla.contaminants.map(function(c,ci){return <span key={ci} style={{fontSize:fs(10),padding:"2px 7px",color:T.textMuted,border:"1px solid "+T.borderLight}}>{c}</span>})}
+                      {p.cercla.contaminants.map(function(c,ci){return <span key={ci} className="tag" style={{color:T.textMuted}}>{c}</span>})}
                     </div>}
-                    {p.cercla.url&&<a href={p.cercla.url} target="_blank" rel="noopener noreferrer" style={{fontSize:fs(10),color:T.link,textDecoration:"none",borderBottom:"1px dotted "+T.link+"44",display:"inline-block",marginTop:6}}>EPA CERCLIS Record →</a>}
+                    {p.cercla.url&&<a href={p.cercla.url} target="_blank" rel="noopener noreferrer" className="src-link" style={{fontSize:fs(10),display:"inline-block",marginTop:6}}>EPA CERCLIS Record →</a>}
                   </div>
                 </div>
               })()}
 
               {/* Year-by-year breakdown */}
               <div style={{marginBottom:16}}>
-                <div style={{color:T.textFaint,fontSize:fs(9),textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:4}}>Year-by-Year Breakdown</div>
+                <div className="section-label">Year-by-Year Breakdown</div>
                 <div style={{maxHeight:240,overflowY:"auto",background:T.bgExpand,border:"1px solid "+T.border}}>
                   <div style={{display:"grid",gridTemplateColumns:"70px 1fr 120px",padding:"6px 12px",color:T.textFaintest,borderBottom:"1px solid "+T.border,position:"sticky",top:0,background:T.bgExpand,fontSize:fs(9),textTransform:"uppercase",letterSpacing:"0.06em"}}><div>Year</div><div></div><div style={{textAlign:"right"}}>Annual Rent</div></div>
                   {res.breakdown.map(function(row){var mx=res.breakdown[res.breakdown.length-1]?res.breakdown[res.breakdown.length-1].rent:1;return <div key={row.year} style={{display:"grid",gridTemplateColumns:"70px 1fr 120px",padding:"3px 12px",borderBottom:"1px solid "+T.borderDark}}><div style={{color:T.textMuted,fontSize:fs(11)}}>{row.year}</div><div style={{position:"relative",height:8,marginTop:4}}><div style={{position:"absolute",left:0,top:0,height:8,background:T.barBg,width:Math.min(100,(row.rent/mx)*100)+"%"}}/></div><div style={{color:T.text,textAlign:"right",fontSize:fs(11)}}>{fmtFull(row.rent)}</div></div>})}
@@ -765,9 +821,9 @@ export default function App(){
 
               {/* Sources */}
               {p.sources&&p.sources.length>0&&<div style={{marginBottom:16}}>
-                <div style={{color:T.textFaint,fontSize:fs(9),textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:4}}>Sources</div>
+                <div className="section-label">Sources</div>
                 <div style={{display:"flex",flexDirection:"column",gap:4}}>
-                  {p.sources.map(function(src,si){return src.url?<a key={si} href={src.url} target="_blank" rel="noopener noreferrer" style={{fontSize:fs(10),color:T.link,textDecoration:"none",borderBottom:"1px dotted "+T.link+"44",lineHeight:1.5}}>{src.label}</a>:<span key={si} style={{fontSize:fs(10),color:T.textMuted,lineHeight:1.5}}>{src.label}</span>})}
+                  {p.sources.map(function(src,si){return src.url?<a key={si} href={src.url} target="_blank" rel="noopener noreferrer" className="src-link" style={{fontSize:fs(10),lineHeight:1.5}}>{src.label}</a>:<span key={si} style={{fontSize:fs(10),color:T.textMuted,lineHeight:1.5}}>{src.label}</span>})}
                 </div>
               </div>}
 

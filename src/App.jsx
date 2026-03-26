@@ -636,7 +636,7 @@ export default function App(){
                   <div style={{display:"flex",gap:8,alignItems:"center",marginBottom:6,flexWrap:"wrap"}}>
                     <span style={{fontSize:fs(9),padding:"2px 6px",background:cat.c+"18",color:cat.c,border:"1px solid "+cat.c+"33",fontWeight:600}}>{CATEGORY_LABELS[p.category]}</span>
                     <span style={{color:T.textFaintest,fontSize:fs(10)}}>{p.island}</span>
-                    {p.confidence&&<span style={{color:T.textFaintest,fontSize:fs(9),border:"1px solid "+T.borderLight,padding:"1px 5px"}}>{p.confidence}</span>}
+                    {p.sources&&p.sources.length>0&&(p.sources[0].url?<a href={p.sources[0].url} target="_blank" rel="noopener noreferrer" style={{color:T.textFaintest,fontSize:fs(9),border:"1px solid "+T.borderLight,padding:"1px 5px",textDecoration:"none"}}>{p.sources[0].label}</a>:<span style={{color:T.textFaintest,fontSize:fs(9),border:"1px solid "+T.borderLight,padding:"1px 5px"}}>{p.sources[0].label}</span>)}
                   </div>
                   <h2 style={{color:T.text,fontSize:fs(20),fontWeight:700,fontFamily:T.fontDisplay,margin:0,lineHeight:1.3}}>{p.name}</h2>
                 </div>
@@ -650,6 +650,7 @@ export default function App(){
                 <div style={{background:T.bgAlt,padding:"12px 14px",textAlign:"center"}}>
                   <div style={{color:T.textFaint,fontSize:fs(9),textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:4}}>Acreage</div>
                   <div style={{color:T.text,fontSize:fs(18),fontWeight:700}}>{p.acres.toLocaleString()}</div>
+                  {p.sources&&p.sources.length>0&&<div style={{color:T.textFaintest,fontSize:fs(8),marginTop:2}}>per {p.sources[0].label}</div>}
                 </div>
                 <div style={{background:T.bgAlt,padding:"12px 14px",textAlign:"center"}}>
                   <div style={{color:T.textFaint,fontSize:fs(9),textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:4}}>Years Held</div>
